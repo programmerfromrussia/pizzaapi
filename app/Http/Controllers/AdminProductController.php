@@ -5,55 +5,42 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
-class ProductController extends Controller
+class AdminProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Store a newly created resource in storage.
      */
-    public function index()
+    public function store(Request $request)
     {
-        $products = Product::all();
-        return response()->json($products, 200);
-    }
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'price' => 'required|numeric|min:0',
+            'category' => 'required|string|max:100',
+            'image' => 'nullable|string',
+            'is_available' => 'boolean',
+        ]);
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
+        try {
+            if ($validator->fails()) {
+                return response()->json(data: $validator->errors(), status: 403);
+            }
 
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show($id)
-    {
-        $product = Product::find($id);
-        if ($product) {
-            return response()->json($product, 200);
+            $product = Product::create($request->all());
+            return response()->json($product, 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        return response()->json(['message' => 'Product not found'], 404);
-
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $product, $id)
+    public function update(Request $request, $id)
     {
         $product = Product::find($id);
-
         if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
@@ -81,7 +68,7 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::find($id);
-        if(!$product){
+        if (!$product) {
             return response()->json(['message' => 'Product not found'], 404);
         }
 
